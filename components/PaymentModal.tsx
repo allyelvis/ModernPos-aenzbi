@@ -5,10 +5,11 @@ interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   totalAmount: number;
-  onConfirm: () => void;
+  onConfirm: (method: 'card' | 'cash') => void;
+  currencySymbol: string;
 }
 
-const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, totalAmount, onConfirm }) => {
+const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, totalAmount, onConfirm, currencySymbol }) => {
   const [selectedMethod, setSelectedMethod] = useState<'card' | 'cash'>('card');
 
   useEffect(() => {
@@ -23,6 +24,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, totalAmoun
 
   if (!isOpen) return null;
 
+  const handleConfirm = () => {
+      onConfirm(selectedMethod);
+  }
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-dark-800 rounded-lg shadow-xl w-full max-w-md m-4 transform transition-all duration-300 scale-95 animate-scale-in">
@@ -35,7 +40,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, totalAmoun
         <div className="p-8">
           <div className="text-center mb-6">
             <p className="text-gray-400">Total Amount Due</p>
-            <p className="text-5xl font-extrabold text-brand-primary">${totalAmount.toFixed(2)}</p>
+            <p className="text-5xl font-extrabold text-brand-primary">{currencySymbol}{totalAmount.toFixed(2)}</p>
           </div>
           <div className="mb-8">
             <p className="text-lg font-semibold mb-4 text-center text-white">Select Payment Method</p>
@@ -57,7 +62,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, totalAmoun
             </div>
           </div>
           <button
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-4 rounded-lg text-lg hover:opacity-90 transition-opacity duration-200 flex items-center justify-center"
           >
             <i data-lucide="check-circle" className="w-6 h-6 mr-2"></i>

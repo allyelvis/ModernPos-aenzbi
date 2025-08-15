@@ -2,8 +2,13 @@
 import React from 'react';
 import SalesChart from '../components/SalesChart';
 import { MOCK_RECENT_SALES } from '../constants';
+import { StoreSettings } from '../types';
 
-const Reports: React.FC = () => {
+interface ReportsProps {
+  storeSettings: StoreSettings;
+}
+
+const Reports: React.FC<ReportsProps> = ({ storeSettings }) => {
   return (
     <div className="space-y-8">
       <h1 className="text-4xl font-bold text-white">Sales Reports</h1>
@@ -33,7 +38,7 @@ const Reports: React.FC = () => {
                   <td className="p-3 font-medium text-white">{sale.id}</td>
                   <td className="p-3">{new Date(sale.date).toLocaleDateString()}</td>
                   <td className="p-3">{sale.items.reduce((sum, item) => sum + item.quantity, 0)}</td>
-                  <td className="p-3 text-right font-semibold text-brand-primary">${sale.total.toFixed(2)}</td>
+                  <td className="p-3 text-right font-semibold text-brand-primary">{storeSettings.currency.symbol}{sale.total.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>

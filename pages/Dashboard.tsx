@@ -2,6 +2,11 @@
 import React, { useEffect } from 'react';
 import SalesChart from '../components/SalesChart';
 import { MOCK_RECENT_SALES } from '../constants';
+import { StoreSettings } from '../types';
+
+interface DashboardProps {
+  storeSettings: StoreSettings;
+}
 
 const StatCard: React.FC<{ title: string; value: string; icon: string; color: string }> = ({ title, value, icon, color }) => (
     <div className="bg-dark-800 p-6 rounded-lg shadow-lg flex items-center">
@@ -15,7 +20,7 @@ const StatCard: React.FC<{ title: string; value: string; icon: string; color: st
     </div>
 );
 
-const Dashboard: React.FC = () => {
+const Dashboard: React.FC<DashboardProps> = ({ storeSettings }) => {
     useEffect(() => {
     // @ts-ignore
     if (window.lucide) {
@@ -29,7 +34,7 @@ const Dashboard: React.FC = () => {
       <h1 className="text-4xl font-bold text-white">Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Today's Revenue" value="$1,250" icon="dollar-sign" color="bg-green-500" />
+        <StatCard title="Today's Revenue" value={`${storeSettings.currency.symbol}1,250`} icon="dollar-sign" color="bg-green-500" />
         <StatCard title="Today's Orders" value="68" icon="shopping-cart" color="bg-blue-500" />
         <StatCard title="New Customers" value="12" icon="users" color="bg-purple-500" />
         <StatCard title="Pending Tasks" value="3" icon="alert-circle" color="bg-yellow-500" />
@@ -49,7 +54,7 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div>
                             <p className="font-semibold text-white">Sale #{sale.id.split('-')[1]}</p>
-                            <p className="text-sm text-gray-400">${sale.total.toFixed(2)} - {new Date(sale.date).toLocaleDateString()}</p>
+                            <p className="text-sm text-gray-400">{storeSettings.currency.symbol}{sale.total.toFixed(2)} - {new Date(sale.date).toLocaleDateString()}</p>
                         </div>
                     </li>
                 ))}

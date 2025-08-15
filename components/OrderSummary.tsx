@@ -7,12 +7,14 @@ interface OrderSummaryProps {
   onQuantityChange: (productId: number, newQuantity: number) => void;
   onRemoveItem: (productId: number) => void;
   onCheckout: () => void;
+  taxRate: number; // in percentage
+  currencySymbol: string;
 }
 
-const OrderSummary: React.FC<OrderSummaryProps> = ({ orderItems, onQuantityChange, onRemoveItem, onCheckout }) => {
+const OrderSummary: React.FC<OrderSummaryProps> = ({ orderItems, onQuantityChange, onRemoveItem, onCheckout, taxRate, currencySymbol }) => {
 
   const subtotal = orderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const tax = subtotal * 0.08; // 8% tax
+  const tax = subtotal * (taxRate / 100);
   const total = subtotal + tax;
   
   useEffect(() => {
@@ -43,7 +45,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ orderItems, onQuantityChang
                   <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-md object-cover mr-4" />
                   <div>
                     <p className="font-semibold text-white">{item.name}</p>
-                    <p className="text-sm text-gray-400">${item.price.toFixed(2)}</p>
+                    <p className="text-sm text-gray-400">{currencySymbol}{item.price.toFixed(2)}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -68,15 +70,15 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ orderItems, onQuantityChang
           <div className="space-y-2 mb-4">
             <div className="flex justify-between text-gray-300">
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>{currencySymbol}{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-300">
-              <span>Tax (8%)</span>
-              <span>${tax.toFixed(2)}</span>
+              <span>Tax ({taxRate}%)</span>
+              <span>{currencySymbol}{tax.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-white font-bold text-xl">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>{currencySymbol}{total.toFixed(2)}</span>
             </div>
           </div>
           <button
