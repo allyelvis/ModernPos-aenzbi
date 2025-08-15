@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { Product, Category } from '../types';
+import type { Product, Category, Department } from '../types';
 import { PRODUCT_CATEGORIES } from '../constants';
 import { generateProductDescription } from '../services/geminiService';
 
@@ -12,6 +12,7 @@ const defaultProductState = {
   imageUrl: 'https://picsum.photos/400/400',
   stock: 0,
   description: '',
+  departmentId: undefined,
 };
 
 interface ProductModalProps {
@@ -19,10 +20,11 @@ interface ProductModalProps {
   product: Product | null;
   onClose: () => void;
   onSave: (product: Omit<Product, 'id'> | Product) => void;
+  departments: Department[];
 }
 
-const ProductModal: React.FC<ProductModalProps> = ({ isOpen, product, onClose, onSave }) => {
-  const [formData, setFormData] = useState(product || defaultProductState);
+const ProductModal: React.FC<ProductModalProps> = ({ isOpen, product, onClose, onSave, departments }) => {
+  const [formData, setFormData] = useState<Omit<Product, 'id'>>(product || defaultProductState);
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
@@ -49,9 +51,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, product, onClose, o
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    let parsedValue: string | number | undefined = value;
+    
+    if (name === 'price' || name === 'stock') {
+        parsedValue = parseFloat(value) || 0;
+    }
+    if (name === 'departmentId') {
+        parsedValue = value ? parseInt(value, 10) : undefined;
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'price' || name === 'stock' ? parseFloat(value) || 0 : value,
+      [name]: parsedValue,
     }));
   };
 
@@ -81,13 +92,22 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, product, onClose, o
                 <input id="sku" name="sku" type="text" value={formData.sku} onChange={handleChange} className="w-full bg-dark-700 text-white rounded-md border border-dark-600 p-2 focus:ring-2 focus:ring-brand-primary focus:outline-none" />
               </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-1">Category</label>
                 <select id="category" name="category" value={formData.category} onChange={handleChange} className="w-full bg-dark-700 text-white rounded-md border border-dark-600 p-2 focus:ring-2 focus:ring-brand-primary focus:outline-none">
                     {PRODUCT_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
               </div>
+               <div>
+                <label htmlFor="departmentId" className="block text-sm font-medium text-gray-300 mb-1">Department</label>
+                <select id="departmentId" name="departmentId" value={formData.departmentId || ''} onChange={handleChange} className="w-full bg-dark-700 text-white rounded-md border border-dark-600 p-2 focus:ring-2 focus:ring-brand-primary focus:outline-none">
+                    <option value="">Unassigned</option>
+                    {departments.map(dep => <option key={dep.id} value={dep.id}>{dep.name}</option>)}
+                </select>
+              </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-1">Price</label>
                 <input id="price" name="price" type="number" value={formData.price} onChange={handleChange} className="w-full bg-dark-700 text-white rounded-md border border-dark-600 p-2 focus:ring-2 focus:ring-brand-primary focus:outline-none" />

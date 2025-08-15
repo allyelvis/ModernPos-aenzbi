@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Product, StoreSettings } from '../types';
+import type { Product, StoreSettings, User } from '../types';
 import ProductModal from '../components/StockAdjustmentModal';
 
 const ProductRow: React.FC<{ 
@@ -7,7 +7,9 @@ const ProductRow: React.FC<{
     currencySymbol: string,
     onEdit: (product: Product) => void;
     onDelete: (productId: number) => void;
-}> = ({ product, currencySymbol, onEdit, onDelete }) => {
+    canPerformActions: boolean;
+    departmentName: string;
+}> = ({ product, currencySymbol, onEdit, onDelete, canPerformActions, departmentName }) => {
 
     const getStockStatus = (stock: number) => {
         if (stock <= 0) return <span className="px-2 py-1 text-xs font-semibold text-white bg-red-600 rounded-full">Out of Stock</span>;
@@ -25,6 +27,7 @@ const ProductRow: React.FC<{
                 </div>
             </td>
             <td className="p-4">{product.category}</td>
+            <td className="p-4">{departmentName}</td>
             <td className="p-4">{currencySymbol}{product.price.toFixed(2)}</td>
             <td className="p-4 font-bold text-white text-center">{product.stock}</td>
              <td className="p-4">{getStockStatus(product.stock)}</td>
@@ -32,24 +35,26 @@ const ProductRow: React.FC<{
                 <p className="truncate" title={product.description}>{product.description || 'No AI description.'}</p>
             </td>
             <td className="p-4 text-right">
-                <div className="flex items-center justify-end space-x-2">
-                    <button 
-                        onClick={() => onEdit(product)}
-                        className="bg-dark-600 text-white p-2 rounded-md text-sm font-semibold hover:bg-blue-600 transition-colors"
-                        aria-label="Edit"
-                        title="Edit"
-                    >
-                        <i data-lucide="pencil" className="w-4 h-4"></i>
-                    </button>
-                    <button 
-                        onClick={() => onDelete(product.id)}
-                        className="bg-dark-600 text-white p-2 rounded-md text-sm font-semibold hover:bg-red-600 transition-colors"
-                        aria-label="Delete"
-                        title="Delete"
-                    >
-                        <i data-lucide="trash-2" className="w-4 h-4"></i>
-                    </button>
-                </div>
+                {canPerformActions && (
+                    <div className="flex items-center justify-end space-x-2">
+                        <button 
+                            onClick={() => onEdit(product)}
+                            className="bg-dark-600 text-white p-2 rounded-md text-sm font-semibold hover:bg-blue-600 transition-colors"
+                            aria-label="Edit"
+                            title="Edit"
+                        >
+                            <i data-lucide="pencil" className="w-4 h-4"></i>
+                        </button>
+                        <button 
+                            onClick={() => onDelete(product.id)}
+                            className="bg-dark-600 text-white p-2 rounded-md text-sm font-semibold hover:bg-red-600 transition-colors"
+                            aria-label="Delete"
+                            title="Delete"
+                        >
+                            <i data-lucide="trash-2" className="w-4 h-4"></i>
+                        </button>
+                    </div>
+                )}
             </td>
         </tr>
     );
@@ -59,11 +64,14 @@ interface ProductsProps {
     storeSettings: StoreSettings;
     products: Product[];
     setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
+    activeUser: User;
 }
 
-const Products: React.FC<ProductsProps> = ({ storeSettings, products, setProducts }) => {
+const Products: React.FC<ProductsProps> = ({ storeSettings, products, setProducts, activeUser }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  
+  const canPerformActions = activeUser.role === 'Admin' || activeUser.role === 'Manager';
 
   useEffect(() => {
     // @ts-ignore
@@ -110,18 +118,25 @@ const Products: React.FC<ProductsProps> = ({ storeSettings, products, setProduct
     });
     handleCloseModal();
   };
+  
+  const getDepartmentName = (departmentId?: number) => {
+      if (!departmentId) return 'N/A';
+      return storeSettings.departments.find(d => d.id === departmentId)?.name || 'Unknown';
+  };
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-4xl font-bold text-white">Product & Inventory</h1>
-        <button
-          onClick={handleAddNew}
-          className="bg-brand-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-brand-primary/80 transition-colors flex items-center"
-        >
-          <i data-lucide="plus" className="w-5 h-5 mr-2"></i>
-          Add New Product
-        </button>
+        {canPerformActions && (
+            <button
+            onClick={handleAddNew}
+            className="bg-brand-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-brand-primary/80 transition-colors flex items-center"
+            >
+            <i data-lucide="plus" className="w-5 h-5 mr-2"></i>
+            Add New Product
+            </button>
+        )}
       </div>
       
       <div className="bg-dark-800 rounded-lg shadow-lg overflow-hidden">
@@ -131,6 +146,7 @@ const Products: React.FC<ProductsProps> = ({ storeSettings, products, setProduct
               <tr className="border-b border-dark-700 text-sm text-gray-400 bg-dark-900/30">
                 <th className="p-4">Product</th>
                 <th className="p-4">Category</th>
+                <th className="p-4">Department</th>
                 <th className="p-4">Price</th>
                 <th className="p-4 text-center">Stock</th>
                 <th className="p-4">Status</th>
@@ -146,18 +162,23 @@ const Products: React.FC<ProductsProps> = ({ storeSettings, products, setProduct
                     currencySymbol={storeSettings.currency.symbol}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    canPerformActions={canPerformActions}
+                    departmentName={getDepartmentName(product.departmentId)}
                 />
               ))}
             </tbody>
           </table>
         </div>
       </div>
-      <ProductModal
-        isOpen={isModalOpen}
-        product={editingProduct}
-        onClose={handleCloseModal}
-        onSave={handleSave}
-      />
+      {canPerformActions && (
+          <ProductModal
+            isOpen={isModalOpen}
+            product={editingProduct}
+            onClose={handleCloseModal}
+            onSave={handleSave}
+            departments={storeSettings.departments}
+          />
+      )}
     </div>
   );
 };

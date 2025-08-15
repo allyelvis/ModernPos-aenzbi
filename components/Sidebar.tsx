@@ -1,14 +1,15 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { NAV_ITEMS } from '../constants';
-import type { Page } from '../types';
+import type { Page, User } from '../types';
 
 interface SidebarProps {
   activePage: Page;
   setActivePage: (page: Page) => void;
+  activeUser: User;
+  onLogout: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, activeUser, onLogout }) => {
 
   useEffect(() => {
     // @ts-ignore
@@ -17,6 +18,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage }) => {
       window.lucide.createIcons();
     }
   });
+  
+  const accessibleNavItems = useMemo(() => {
+    return NAV_ITEMS.filter(item => item.roles.includes(activeUser.role));
+  }, [activeUser.role]);
 
   return (
     <aside className="w-20 lg:w-64 bg-dark-800 p-2 lg:p-4 flex flex-col justify-between transition-all duration-300">
@@ -27,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage }) => {
         </div>
         <nav>
           <ul>
-            {NAV_ITEMS.map((item) => (
+            {accessibleNavItems.map((item) => (
               <li key={item.id}>
                 <button
                   onClick={() => setActivePage(item.id)}
@@ -47,11 +52,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage }) => {
       </div>
        <div className="p-3 rounded-lg bg-dark-900">
         <div className="flex items-center">
-            <img src="https://picsum.photos/id/237/100/100" alt="Admin" className="w-10 h-10 rounded-full" />
-            <div className="hidden lg:block ml-4">
-                <p className="font-semibold text-white">Ally Elvis</p>
-                <p className="text-xs text-gray-400">Administrator</p>
+            <img src={`https://i.pravatar.cc/150?u=${activeUser.email}`} alt="Admin" className="w-10 h-10 rounded-full" />
+            <div className="hidden lg:block ml-4 flex-1">
+                <p className="font-semibold text-white truncate">{activeUser.name}</p>
+                <p className="text-xs text-gray-400">{activeUser.role}</p>
             </div>
+            <button onClick={onLogout} className="hidden lg:block ml-2 text-gray-400 hover:text-white" title="Logout">
+                <i data-lucide="log-out" className="w-5 h-5"></i>
+            </button>
         </div>
       </div>
     </aside>
